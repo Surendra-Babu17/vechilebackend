@@ -33,7 +33,7 @@ DEBUG = env.bool('DEBUG', default=True)
 if DEBUG:
     ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 else:
-    ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['your-production-domain.com'])
+    ALLOWED_HOSTS = ['vechilebackend-9.onrender.com']
 
 # ------------------------------
 # Installed Apps
