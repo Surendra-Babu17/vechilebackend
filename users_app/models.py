@@ -1,25 +1,33 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password
 
-# Custom User Manager
+# ---------- Custom User Manager ----------
 class UserRegManager(BaseUserManager):
-    def create_user(self, email, userName, password=None):
+    def create_user(self, email, userName, password=None, **extra_fields):
         if not email:
-            raise ValueError("Email required")
-        user = self.model(email=self.normalize_email(email), userName=userName)
-        user.set_password(password)  # hash password
-        user.save()
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, userName=userName, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
         return user
 
     def create_superuser(self, email, userName, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
         return self.create_user(email, userName, password, **extra_fields)
 
 
-# Custom User Model
-class userReg(AbstractBaseUser):
+# ---------- Custom User Model ----------
+class userReg(AbstractBaseUser, PermissionsMixin):
     userId = models.AutoField(primary_key=True)
     userName = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
@@ -38,9 +46,9 @@ class userReg(AbstractBaseUser):
         return self.email
 
 
-# Optional Client Model
+# ---------- Optional Client Model ----------
 class clientReg(models.Model):
-    clientName = models.CharField(max_length=100, null=False)
+    clientName = models.CharField(max_length=100)
     clientEmail = models.EmailField(unique=True)
     clientPhone = models.CharField(max_length=10)
     clientLocation = models.CharField(max_length=50, default="yourcity")
