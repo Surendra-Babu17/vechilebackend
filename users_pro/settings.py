@@ -7,39 +7,33 @@ import pymysql
 # ------------------------------
 # BASE DIR
 # ------------------------------
-# Django project root path define cheyyadam
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ------------------------------
 # Environment variables
 # ------------------------------
-# .env file nundi sensitive info (SECRET_KEY, DB details) read cheyyadam
 env = environ.Env()
+# read .env file if present (local) - in Render you set env vars in dashboard
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # ------------------------------
 # SECURITY
 # ------------------------------
-# SECRET_KEY -> Django secret key (production lo strong ga pettali)
 SECRET_KEY = env('SECRET_KEY', default='replace-this-in-prod')
-# DEBUG -> Development mode on/off
+# env.bool will parse "True"/"False" strings too
 DEBUG = env.bool('DEBUG', default=True)
 
 # ------------------------------
-# Allowed Hosts
+# Allowed Hosts (use env var)
 # ------------------------------
-# DEBUG = True -> localhost lo matrame allowed
-# DEBUG = False -> production domain lo allow cheyyali
-if DEBUG:
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-else:
-    ALLOWED_HOSTS = ['vechilebackend-9.onrender.com']
+# Set DJANGO_ALLOWED_HOSTS="vechilebackend-9.onrender.com,localhost,127.0.0.1"
+allowed_hosts_env = env('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1')
+ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(',') if h.strip()]
 
 # ------------------------------
 # Installed Apps
 # ------------------------------
 INSTALLED_APPS = [
-    # Default Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,12 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third-party apps
-    'rest_framework',     # Django REST API framework
-    'corsheaders',        # Cross-Origin Resource Sharing (frontend integration ki)
+    # Third-party
+    'rest_framework',
+    'corsheaders',
 
-    # Custom apps
-    'users_app',          # me app
+    # Your apps
+    'users_app',
 ]
 
 # ------------------------------
@@ -61,7 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # React frontend to allow cheyyali
+    'corsheaders.middleware.CorsMiddleware',  # must be above CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -76,7 +70,7 @@ ROOT_URLCONF = 'users_pro.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Custom templates folder
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,30 +81,27 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = 'users_pro.wsgi.application'
 
 # ------------------------------
 # Custom User Model
 # ------------------------------
-# me custom user model use cheyyali
 AUTH_USER_MODEL = 'users_app.userReg'
 
 # ------------------------------
 # Database (MySQL)
 # ------------------------------
-# pymysql -> MySQL Python driver
 pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': env('DB_NAME', default='userDb'),
         'USER': env('DB_USER', default='root'),
-        'PASSWORD': env('DB_PASSWORD', default='Haritha#17'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
         'HOST': env('DB_HOST', default='127.0.0.1'),
         'PORT': env('DB_PORT', default='3306'),
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",  # MySQL strict mode
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
@@ -118,7 +109,6 @@ DATABASES = {
 # ------------------------------
 # Password Validators
 # ------------------------------
-# Django default validators
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
@@ -130,15 +120,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # ------------------------------
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'   # set to your timezone
 USE_I18N = True
 USE_TZ = True
 
 # ------------------------------
 # Static Files
 # ------------------------------
-STATIC_URL = '/static/'                 # URL lo static files access
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Production lo collectstatic folder
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -147,26 +137,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ------------------------------
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',  # JWT token auth
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
 
 # ------------------------------
-# CORS (Frontend + Backend integration)
+# CORS (add deployed frontend origin too)
 # ------------------------------
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React local dev server
+    "http://localhost:3000",
 ]
-CORS_ALLOW_CREDENTIALS = True      # Cookies send cheyyali
+# If your frontend is deployed e.g. https://myfrontend.com add it:
+# CORS_ALLOWED_ORIGINS.append("https://myfrontend.com")
+CORS_ALLOW_CREDENTIALS = True
 
 # ------------------------------
 # SIMPLE_JWT Settings
 # ------------------------------
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),      # Access token valid time
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),         # Refresh token valid time
-    'USER_ID_FIELD': 'userId',                            # me custom user primary key
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'USER_ID_FIELD': 'userId',
     'USER_ID_CLAIM': 'user_id',
-    'ROTATE_REFRESH_TOKENS': True,                        # refresh rotate
-    'BLACKLIST_AFTER_ROTATION': True,                     # refresh token blacklist
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
+
+# ------------------------------
+# Proxy / SSL (if behind proxy like Render)
+# ------------------------------
+# Uncomment if your host sets X-Forwarded-Proto
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# USE_X_FORWARDED_HOST = True
