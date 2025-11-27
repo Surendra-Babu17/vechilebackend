@@ -21,13 +21,13 @@ SECRET_KEY = env("SECRET_KEY", default="dev-secret")
 DEBUG = env.bool("DEBUG", default=True)
 
 # ------------------------------
-# ALLOWED HOSTS (Render ready)
+# ALLOWED HOSTS
 # ------------------------------
 allowed_hosts = env("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 ALLOWED_HOSTS = allowed_hosts.split(",")
 
 # ------------------------------
-# RENDER FIXES (very important)
+# RENDER FIXES
 # ------------------------------
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -154,7 +154,7 @@ REST_FRAMEWORK = {
 }
 
 # ------------------------------
-# SIMPLE JWT CONFIG (fixed)
+# SIMPLE JWT CONFIG
 # ------------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
