@@ -24,11 +24,15 @@ DEBUG = env.bool("DEBUG", default=True)
 # ------------------------------
 # ALLOWED HOSTS
 # ------------------------------
-# IMPORTANT:
-# Render dashboard lo:
-# DJANGO_ALLOWED_HOSTS="vechilebackend-10.onrender.com,localhost,127.0.0.1"
+# Render dashboard lo: DJANGO_ALLOWED_HOSTS="vechilebackend-10.onrender.com,localhost,127.0.0.1"
 allowed_hosts = env("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 ALLOWED_HOSTS = allowed_hosts.split(",")
+
+# ------------------------------
+# RENDER FIXES (very important)
+# ------------------------------
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ------------------------------
 # INSTALLED APPS
@@ -163,9 +167,3 @@ SIMPLE_JWT = {
     "USER_ID_FIELD": "userId",
     "USER_ID_CLAIM": "user_id",
 }
-
-# ------------------------------
-# RENDER FIXES (very important)
-# ------------------------------
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
