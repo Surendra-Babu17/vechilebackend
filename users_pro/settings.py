@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import environ
 from datetime import timedelta
 import pymysql
@@ -22,9 +21,8 @@ SECRET_KEY = env("SECRET_KEY", default="dev-secret")
 DEBUG = env.bool("DEBUG", default=True)
 
 # ------------------------------
-# ALLOWED HOSTS
+# ALLOWED HOSTS (Render ready)
 # ------------------------------
-# Render dashboard lo: DJANGO_ALLOWED_HOSTS="vechilebackend-10.onrender.com,localhost,127.0.0.1"
 allowed_hosts = env("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1")
 ALLOWED_HOSTS = allowed_hosts.split(",")
 
@@ -59,10 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-
-    # CORS MUST be above CommonMiddleware
     "corsheaders.middleware.CorsMiddleware",
-
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -140,12 +135,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ------------------------------
 # CORS CONFIG
 # ------------------------------
+FRONTEND_URL = env("FRONTEND_URL", default="")
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
-
-# If frontend deploy ayithe add here:
-# CORS_ALLOWED_ORIGINS.append("https://your-frontend.onrender.com")
+if FRONTEND_URL:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -159,11 +154,12 @@ REST_FRAMEWORK = {
 }
 
 # ------------------------------
-# SIMPLE JWT CONFIG
+# SIMPLE JWT CONFIG (fixed)
 # ------------------------------
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "USER_ID_FIELD": "userId",
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
 }
