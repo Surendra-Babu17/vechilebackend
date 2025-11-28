@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.hashers import make_password
 from .models import userReg, clientReg
 
 class UserRegSerializer(serializers.ModelSerializer):
@@ -14,7 +15,11 @@ class UserRegSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         user = userReg(**validated_data)
         if password:
-            user.set_password(password)
+            # use model's set_password if available, otherwise fall back to hashing
+            if hasattr(user, "set_password"):
+                user.set_password(password)
+            else:
+                user.password = make_password(password)
         user.save()
         return user
 
@@ -23,7 +28,10 @@ class UserRegSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         if password:
-            instance.set_password(password)
+            if hasattr(instance, "set_password"):
+                instance.set_password(password)
+            else:
+                instance.password = make_password(password)
         instance.save()
         return instance
 
@@ -38,6 +46,10 @@ class ClientRegSerializer(serializers.ModelSerializer):
         password = validated_data.pop("clientPassword", None)
         client = clientReg(**validated_data)
         if password:
-            client.clientPassword = make_password(password)
+            # if model defines a setter like set_password, prefer it; else hash
+            if hasattr(client, "set_password"):
+                client.set_password(password)
+            else:
+                client.clientPassword = make_password(password)
         client.save()
         return client

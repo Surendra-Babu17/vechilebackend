@@ -6,7 +6,7 @@ from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-
+import traceback
 from users_app.models import userReg
 from users_app.serializers import UserRegSerializer
 
@@ -22,16 +22,25 @@ def home(request):
 # ------------------------------
 # Register (returns 200 on success as you asked)
 # ------------------------------
+# Replace the existing register function with this safer version
+import traceback
+from rest_framework import status
+
 @csrf_exempt
-@api_view(['POST'])
+@api_view(['GET','POST'])
 @parser_classes([JSONParser, FormParser, MultiPartParser])
 def register(request):
     """
-    Safe register:
-    - uses serializer validation
-    - catches IntegrityError (unique constraints)
-    - returns 200 on success (per your request)
+    Safer register:
+    - GET: returns simple info (no validation/save)
+    - POST: validates and saves using serializer
+    - prints traceback on unexpected exceptions so Render logs show it
     """
+    if request.method == 'GET':
+        return Response({"success": True, "info": "Send a POST with user data to register."},
+                        status=status.HTTP_200_OK)
+
+    # POST handling
     serializer = UserRegSerializer(data=request.data)
     if not serializer.is_valid():
         return Response({"success": False, "error": "validation_failed", "details": serializer.errors},
@@ -40,19 +49,17 @@ def register(request):
         user = serializer.save()
     except IntegrityError as e:
         # Unique field violation (username/email) or DB-level constraint
+        traceback.print_exc()   # print to logs for Render visibility
         return Response({"success": False, "error": "integrity_error", "detail": str(e)},
                         status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        # Unexpected server-side error -> log and return safe message
-        # (Render logs will contain traceback if you print it on server)
+        # Unexpected server-side error -> log traceback and return safe message
+        traceback.print_exc()
         return Response({"success": False, "error": "internal_server_error", "detail": str(e)},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # remove password from response if serializer included it
     data = UserRegSerializer(user).data
     data.pop('password', None)
-
-    # Return 200 as you requested (successful registration)
     return Response({"success": True, "message": "User registered successfully", "data": data},
                     status=status.HTTP_200_OK)
 

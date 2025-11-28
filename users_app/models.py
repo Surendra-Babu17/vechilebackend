@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.hashers import make_password   # <- ADDED
 
 # ---------- Custom User Manager ----------
 class UserRegManager(BaseUserManager):
@@ -49,13 +50,16 @@ class clientReg(models.Model):
     clientEmail = models.EmailField(unique=True)
     clientPhone = models.CharField(max_length=10, null=True, blank=True)
     clientLocation = models.CharField(max_length=50, default="yourcity")
-    clientPhoto = models.CharField(max_length=500)
+    clientPhoto = models.CharField(max_length=500, null=True, blank=True)  # made optional
     clientPassword = models.CharField(max_length=255)
 
     def save(self, *args, **kwargs):
-        # Hash password only on create
+        # Hash password only on create or when raw password looks unhashed
         if not self.pk:
-            self.clientPassword = make_password(self.clientPassword)
+            # if clientPassword already hashed, make_password will still return a hashed string,
+            # but we want to avoid double-hashing — a safe simple approach is:
+            if self.clientPassword and not self.clientPassword.startswith('pbkdf2_'):
+                self.clientPassword = make_password(self.clientPassword)
         super().save(*args, **kwargs)
 
     def check_client_password(self, raw_password):
